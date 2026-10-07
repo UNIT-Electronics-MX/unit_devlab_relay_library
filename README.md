@@ -10,7 +10,7 @@ master and the
 [`DevLab_Interface`](https://github.com/UNIT-Electronics-MX/unit_devlab_interface_library)
 `DevLab_I2C_Orchestrator` bus class into a single `DevLab_Relay` object.
 
-Compatible with ESP32, RP2040/RP2350 and Arduino-compatible platforms.
+Compatible with ESP32, RP2040/RP2350, STM32, AVR and Arduino-compatible platforms.
 
 ---
 

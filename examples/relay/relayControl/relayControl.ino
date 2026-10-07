@@ -4,7 +4,7 @@
  *          every 2 seconds, reading back and printing the relay state after
  *          each command over Serial (115200 baud).
  * @author  Jonathan Mejorado
- * @note    Supported boards: ESP32 and RP2040/RP2350.
+ * @note    Supported boards: ESP32, RP2040/RP2350, STM32 and AVR.
  */
 
 #include <Arduino.h>
@@ -25,8 +25,17 @@
 #elif defined(ARDUINO_ARCH_ESP32)
   constexpr uint8_t I2C_SDA = 6U, I2C_SCL = 7U;
   constexpr uint32_t I2C_CLOCK_HZ = 400000U;
+#elif defined(ARDUINO_ARCH_STM32)
+  // STM32duino: default I2C pins of the selected board.
+  constexpr uint8_t I2C_SDA = SDA, I2C_SCL = SCL;
+  constexpr uint32_t I2C_CLOCK_HZ = 400000U;
+#elif defined(ARDUINO_ARCH_AVR)
+  // AVR has fixed I2C pins (Uno/Nano: A4/A5, Mega: 20/21, Leonardo: 2/3);
+  // SDA/SCL come from the board variant and begin() ignores the pin numbers.
+  constexpr uint8_t I2C_SDA = SDA, I2C_SCL = SCL;
+  constexpr uint32_t I2C_CLOCK_HZ = 100000U;  // 400 kHz falla con el level shifter en UNO
 #else
-  #error "Use ESP32 or RP2040/RP2350"
+  #error "Use ESP32, RP2040/RP2350, STM32 or AVR"
 #endif
 
 constexpr uint32_t SWITCH_INTERVAL_MS = 2000U;

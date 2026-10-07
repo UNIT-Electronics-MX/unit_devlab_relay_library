@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <DevLabDDP.h>
+#include <DevLab_I2C_Orchestrator.h>
 
 #if defined(ARDUINO_ARCH_RP2040)
   /* Both pin pairs below use I2C0, exposed as Wire by these variants. */
@@ -18,12 +19,24 @@
   #define I2C_BUS Wire
   constexpr uint8_t I2C_SDA = 6U, I2C_SCL = 7U;
   constexpr uint32_t I2C_CLOCK_HZ = 400000U;
+#elif defined(ARDUINO_ARCH_STM32)
+  #define I2C_BUS Wire
+  // STM32duino: default I2C pins of the selected board.
+  constexpr uint8_t I2C_SDA = SDA, I2C_SCL = SCL;
+  constexpr uint32_t I2C_CLOCK_HZ = 400000U;
+#elif defined(ARDUINO_ARCH_AVR)
+  // AVR has fixed I2C pins (Uno/Nano: A4/A5, Mega: 20/21, Leonardo: 2/3);
+  // SDA/SCL come from the board variant and begin() ignores the pin numbers.
+  #define I2C_BUS Wire
+  constexpr uint8_t I2C_SDA = SDA, I2C_SCL = SCL;
+  constexpr uint32_t I2C_CLOCK_HZ = 100000U;  // 400 kHz falla con el level shifter en UNO
 #else
-  #error "Use ESP32 or RP2040/RP2350"
+  #error "Use ESP32, RP2040/RP2350, STM32 or AVR"
 #endif
 
 constexpr uint16_t EXPECTED_DEVICE_ID = DevLabDDP::DEVICE_RELAY;
-DevLabDDP::Master master(I2C_BUS, EXPECTED_DEVICE_ID);
+DevLab_I2C_Orchestrator bus(I2C_BUS, I2C_CLOCK_HZ);
+DevLabDDP::Master master(bus, EXPECTED_DEVICE_ID);
 String inputLine;
 
 bool parseAddress(const String &text, uint8_t &address) {
@@ -128,14 +141,7 @@ void setup() {
   Serial.begin(115200);
   delay(500);
 
-#if defined(ARDUINO_ARCH_RP2040)
-  I2C_BUS.setSDA(I2C_SDA);
-  I2C_BUS.setSCL(I2C_SCL);
-  I2C_BUS.begin();
-#else
-  I2C_BUS.begin(I2C_SDA, I2C_SCL);
-#endif
-  I2C_BUS.setClock(I2C_CLOCK_HZ);
+  bus.beginRecovered(I2C_SDA, I2C_SCL);
 
   Serial.print("Expected DDP device ID: 0x");
   Serial.println(EXPECTED_DEVICE_ID, HEX);
